@@ -1,0 +1,107 @@
+/* Style sheet for COMP284 - Assignment 3 */
+
+ body {
+    /*General*/
+    font-family: Calibri;
+    color: black;
+	background-image:url('back2.jpg');
+	background-repeat:no-repeat;
+	background-attachment: fixed;
+	background-position: center;
+	
+	
+	/* includes a background image, as this looks much better than plain colour*/
+     }
+	 
+	 #wrapper {
+		width:900px;
+		margin:0px auto;
+		border:1px solid #bbb;
+		padding:10px;
+		background-color: #dce7ed;
+		
+	}
+	 #header {
+		border:1px solid #bbb;
+		height:80px;
+		padding:10px;
+		background-color: #dce7ed;
+	}
+	#content {
+		margin-top:10px;
+		padding-bottom:10px;
+		background-color: #dce7ed;
+	}
+	/* applies to all divs within the content div */
+  #content div {
+		padding:10px;
+		border:1px solid #bbb;
+		
+    float:left;
+	}
+  #content-left {
+  	width:100px;
+	}
+  #content-main {
+		padding:10px;
+		margin-left:10px;
+		width:746px;
+		
+	}
+  #footer {
+		float:left;
+		margin-top:10px;
+		margin-bottom:10px;
+    padding:10px;
+    border:1px solid #bbb;
+    width:878px;
+	background-color: #dce7ed;
+	}
+  #bottom {
+		clear:both;
+		text-align:left;
+		background-color: #dce7ed;
+		
+	}
+	 h1 {
+    font-family: Calibri;
+	text-decoration:underline;
+	text-align:center;
+	}
+	/*Use for Sub-titles*/
+	h2{
+	font-family: Calibri;
+	text-decoration:underline;
+	}
+	/*Use for Menu Items*/
+	h3{
+	font-family: Calibri;
+	}
+	table {
+	border-collapse: separate;
+	empty-cells: show;
+	}
+	
+	/*Classes for changing the image in a cell
+	 *show what kind of object is in that cell
+	*/
+	.robot {
+		background-image:url('hk-47ii.png');
+	}
+	
+	.hero{
+		background-image:url('heroii.png');
+	}
+	
+	.treasure{
+		background-image:url('treasure.png');
+	}
+	
+	.obstacle{
+		background-image:url('rock.png');
+	}
+	.dead{
+		background-image:url('skull.png');
+	}
+	
+	

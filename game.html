@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<meta charset="UTF-8"> 
+<html>
+<!--
+Description: A javascript implementation of a simple game
+Author: 	 Edward Stansfield
+CSID:		 U3ES
+UOLID		 200958929
+For:		 COMP284 - Assignment 3
+-->
+<head>
+<title>
+Hero Game
+</title>
+<link rel="stylesheet" href="COMP284.css"/>
+<script type="text/javascript">
+	/*This function is called when a cell is clicked on in the setup stage,
+	it brings up a dialogue box asking for input
+	and processes that input accordingly */
+	function addItem(elem){
+		
+		var currentPosition = elem.id;
+		
+		//Initially check the cell is not occupied
+		switch(elem.className){
+			case 'hero': alert("This cell is already occupied by the hero! \n Please select another cell.");
+			break;
+			case 'robot': alert("This cell is already occupied by a killer robot! \n Please select another cell.");
+			break;
+			case 'obstacle': alert("This cell is already occupied by a obstacle! \n Please select another cell.");
+			break;
+			case 'treasure': alert("This cell is already occupied by a treasure! \n Please select another cell.");
+			break;
+			default:
+				do{
+					nString = prompt("Enter a letter h,k,o or a number 0-9");
+					if(nString == null){
+						return;				//Breaks out of function if user presses cancel button
+					}
+					
+				}while(nString == undefined)
+				//Check that input is correct length
+				if(nString.length >= 2){
+					alert("Invalid input! \nYou have entered too many characters!");
+				}
+				else{
+					switch(nString){
+						case 'k': elem.className = 'robot';
+							var tempRobot = new killerRobot(currentPosition);
+							killerRobots.push(tempRobot);
+						break;
+						//Check that the hero hasn't already been placed
+						case 'h': if(heroPlaced == true){
+									alert("The Hero has already been placed!");
+								}
+								else{
+									elem.className = 'hero';
+									heroPlaced = true;
+									theHero = new hero(currentPosition);
+								}
+						break;
+						case 'o':	elem.className = 'obstacle';
+							var tempObstacle = new obstacle(currentPosition);
+							obstacles.push(tempObstacle);
+						break;
+						case '0':	
+						case '1':	
+						case '2': 	
+						case '3': 
+						case '4': 
+						case '5': 
+						case '6': 	
+						case '7': 
+						case '8': 	
+						case '9': 	elem.className = 'treasure';
+									tempTreasure = new treasure(currentPosition,nString);
+									treasures.push(tempTreasure);
+						break;
+						default: alert("That is not valid input!");
+					}
+				}
+		}
+	}
+	</script>
+	<script type="text/javascript">
+	//Object for treasure type, holds values and positions
+	//no set as this does not change after creation
+	function treasure(x,v){
+		
+		var position = x;		//the current position
+		var value = v;			//The Value of the treasure
+		
+		this.getPosition = function(){
+			return position;
+		}
+		this.getValue = function(){
+			return value;
+		}
+	}
+	
+	//Object for hero, stores position and whether it can move or not
+	function hero(x){
+		
+		var position = x;		//the current position
+		var possibleMovement = true;	//Boolean value showing whether hero can move
+		
+		this.getPosition = function(){
+			return position;
+		}
+		
+		this.setPosition = function(newPosition){
+			position = newPosition;
+		}
+		
+		this.getPossibleMovement = function(){
+			return possibleMovement;
+		}
+		
+		this.setPossibleMovement = function(truthValue){
+			possibleMovement = truthValue;
+		}
+	}
+	//robot, holds position and whether it can move or not
+	function killerRobot(x){
+	
+	var position = x;		//the current position
+	var possibleMovement = true;
+		
+		this.getPosition = function(){
+			return position;
+		}
+		
+		this.setPosition = function(newPosition){
+			position = newPosition;
+		}
+		
+		this.getPossibleMovement = function(){
+			return possibleMovement;
+		}
+		
+		this.setPossibleMovement = function(truthValue){
+			possibleMovement = truthValue;
+		}
+		
+	}
+	//Obstacle holds position, no set as this values does not change after creation
+	function obstacle(x){
+		var position = x;		//the current position
+		
+		
+		this.getPosition = function(){
+			return position;
+		}
+		
+	}
+	//Function called on button press, saves data and loads the play page
+	function playGame(){
+		//document.writeln(treasures[0].getXPosition() + treasures[0].getYPosition() + treasures[0].getValue());
+		if(heroPlaced == false){
+			alert("You have not placed the hero!");
+		}
+		//End Game, no treasure
+		else if(treasures.length == 0){
+			
+			var  t = confirm("You have not placed any treasures, are you sure?");
+			if(t == true){
+				endGame("Draw");
+			}
+			else{	//Do nothing
+			}
+		}
+		//Clear the setup stage, move to play, redraw table and objects add key event
+		else{
+			
+			content = document.getElementById('content');
+			content.innerHTML = "";
+			content.innerHTML += "<p><h3>Instructions:</h3></p>"+
+			"<p> Your goal is to collect all of the treasure on the map, make sure to avoid the killer robots!</p>"+
+			"<p><h3>General info:</h3></p>"
+			+"<ul>"
+			+"<li>The game is played in rounds, you first then the computer will attempt to move the killer robots to intercept you.</li>"
+			+"<li>You win the game if you collect all of the treasure on the map, or if the hero is alive when the 'End Game' button is pressed.</li>"
+			+"<li>You lose if the killer robots get you.</li>"
+			+"<li>If neither of these conditions are satisfied when the game ends, then it is a draw.</li>"
+			+"<li>You cannot move to a cell occupied by an obstacle.</li>"
+			+"<li>You <strong>can</strong> move to cell occupied by a robot, so be careful!</li>"
+			+"<li> You can only move horizontally and vertically.</li>"
+			+"<li>The robots can move like the hero and also diagonally!</li>"
+			+"<li>You can end the game at any time by pressing the 'End Game' button.</li>"
+			+"</ul>"
+			+"<p>To move your hero press:"
+			+"<ul>"
+			+"<li><i>'a'</i> to move one cell to the left.</li>"
+			+"<li><i>'d'</i> to move one cell to the right.</li>"
+			+"<li><i>'w'</i> to move one cell up.</li>"
+			+"<li><i>'x'</i> to move one cell down.</li>"
+			+"</ul></p>";
+			
+			content.innerHTML += "Rounds Played: <span id=\"rounds\"></span><br/>";
+			content.innerHTML += "Treasure Collected: <span id=\"treasureTally\"></span><br/>";
+			
+			roundsTally = document.getElementById("rounds");
+			treasureTally = document.getElementById("treasureTally");
+			
+			roundsTally.innerHTML = roundsPlayed;
+			treasureTally.innerHTML = totalTreasure;
+			
+			//Add the Table
+			
+			var html = "<table border='5' cellpadding='10' align='center' cellspacing='5' id='playTable'>";
+			
+			for(var k = 0;k<10;k++){
+				html += "<tr id=row"+k+">";
+					for(var l = 0;l<10;l++){
+						html += "<td id=row"+k+"cell"+l+"></td>";
+					}
+				html += "</tr>";
+			}
+			
+			html += "</table>";
+			
+			content.innerHTML += html;
+			
+			//Add the end game button
+			
+			content.innerHTML += "<button type=\"Button\" onclick=\"confirmEndGame()\">End Game</button><br/>";
+			
+			//Fill the table
+			
+			var playTable = document.getElementById('playTable');
+			var fillPosition = theHero.getPosition();
+			var fillCell = document.getElementById(fillPosition);
+			fillCell.className = 'hero';
+			
+			//fill in obstacles
+
+			for(i = 0;i<obstacles.length;i++){
+				fillPosition = obstacles[i].getPosition();
+				fillCell = document.getElementById(fillPosition);
+				fillCell.className = 'obstacle';
+				
+			}
+			
+			//fill in treasures
+			
+			for(i = 0;i<treasures.length;i++){
+				fillPosition = treasures[i].getPosition();
+				fillCell = document.getElementById(fillPosition);
+				fillCell.className = 'treasure';
+				
+			}
+			
+			//fill in killer robots
+			
+			for(i = 0;i<killerRobots.length;i++){
+				fillPosition = killerRobots[i].getPosition();
+				fillCell = document.getElementById(fillPosition);
+				fillCell.className = 'robot';
+				
+			}
+			
+			
+			//Play the Game
+			
+			//Key event added to body of code, heroMove processes input
+			window.onkeyup = function(e) {
+				var key = e.keyCode ? e.keyCode : e.which;
+				
+				//content.innerHTML += key;
+					
+				
+					heroMove(key);
+				
+				
+			}
+		}
+	}
+	
+	/* This function firstly checks to see if the hero can move, if not goes to compturn
+	 * else it then processes the user input and reacts accordingly, then goes to 
+	 * compturn.
+	*/
+	
+	function heroMove(key){
+	var currentHeroPosition = theHero.getPosition();
+	var currentHeroRow = captureRow(currentHeroPosition);
+	var currentHeroCell = captureCell(currentHeroPosition);
+	var oldHeroCell = currentHeroCell;
+	var oldHeroRow = currentHeroRow;
+	var upHeroRow = parseInt(currentHeroRow) - 1;
+	var leftHeroCell = parseInt(currentHeroCell) - 1;
+	var rightHeroCell = parseInt(currentHeroCell) + 1;
+	var downHeroRow = parseInt(currentHeroRow) + 1;
+
+	var validMoveInput = true;
+	var heroMovementPossible = false;
+	
+	//Check that movement is possible first, if not move to compTurn
+	if(theHero.getPossibleMovement() == true){
+	
+	
+	//Movement detection, checks cells up,right,left,down of hero, sets movement possible if
+	//one of those cells or more are empty
+	for(currentHeroRow = upHeroRow;currentHeroRow<=downHeroRow;currentHeroRow++){
+		for(currentHeroCell = leftHeroCell;currentHeroCell<=rightHeroCell;currentHeroCell++){
+			var heroCheckID = "row"+currentHeroRow+"cell"+currentHeroCell;
+			var heroCheckDocID = document.getElementById(heroCheckID);
+			//Skip diagonal cells, can't move that way anyway
+			//Skip cell if contains obstacle,robot or is off edge of board
+			if(obstacleCheck(heroCheckID) || killerRobotCheck(heroCheckID) || heroCheckID == currentHeroPosition || heroCheckDocID == null
+				|| currentHeroCell == leftHeroCell && currentHeroRow == upHeroRow || currentHeroCell == rightHeroCell && currentHeroRow == upHeroRow
+				|| currentHeroCell == leftHeroCell && currentHeroRow == downHeroRow || currentHeroCell == rightHeroCell && currentHeroRow == downHeroRow){
+				continue;
+			}
+			else if(!obstacleCheck(heroCheckID) && !killerRobotCheck(heroCheckID)){
+				//alert("Movement Possible!" + heroCheckID);
+				heroMovementPossible = true;
+			}
+		}
+	}	//Can't move skip to robot turn
+	if(heroMovementPossible == false){
+		alert("Hero Can't Move!");
+		theHero.setPossibleMovement(false);
+		compTurn();
+	}	//Hero can move, process input as normal
+	else{
+			currentHeroCell = oldHeroCell;
+			currentHeroRow = oldHeroRow;
+			
+			switch(key){
+				//a, left
+				case 65: currentHeroCell--;
+						validMoveInput = true;
+				break;
+				//d, right
+				case 68: currentHeroCell++;
+						validMoveInput = true;
+				break;
+				//w, up
+				case 87: currentHeroRow--;
+						validMoveInput = true;
+				break;
+				//x, down
+				case 88: currentHeroRow++;
+						validMoveInput = true;
+				break;
+				//any other input
+				default:	//not valid input, bring up error message, bound to be annoying
+						validMoveInput = false;
+						alert("That is not valid input!\nPlease press a,w,d or x.");
+			}
+				var newHeroPosition = "row"+currentHeroRow+"cell"+currentHeroCell;
+				//Edge of board, disallow move
+				if(currentHeroCell < 0 || currentHeroCell > 9 || currentHeroRow < 0 || currentHeroRow > 9){
+					alert("Trying to commit suicide eh? \n Well that would be too easy.");
+					compTurn();
+				}
+				else if(killerRobotCheck(newHeroPosition)){
+					document.getElementById(currentHeroPosition).className = "";
+					document.getElementById(newHeroPosition).className = 'dead';
+					alert("You walked right into a killer robot! \nNot to smart are you?");
+					//player killed self, end game
+					endGame("Defeat");
+				}
+				else if(obstacleCheck(newHeroPosition)){
+					alert("You can't walk through rocks dummy!");
+					compTurn();
+				}
+				else if(validMoveInput == true){
+					//Check for treasure
+					if(treasureCheck(newHeroPosition)){
+						alert("You have found treasure!");
+						//Find treasure in array, remove and add value to total, update log
+						for(i = 0;i<treasures.length;i++){
+							//remove the treasure
+							if(newHeroPosition == treasures[i].getPosition()){
+								//ParseInt required as string concatenation happens otherwise
+								//alert(treasures[i].getValue());
+								newValue = parseInt(treasures[i].getValue());
+								
+								totalTreasure = totalTreasure + newValue;
+								document.getElementById("treasureTally").innerHTML = totalTreasure;
+								//content.innerHTML += totalTreasure;
+								//alert(totalTreasure);
+								treasures.splice(i,1);
+								//alert(treasures.length);
+								if(treasures.length <= 0){
+									endGame("Win");
+								}
+								break;
+							}
+						}
+					}
+					document.getElementById(currentHeroPosition).className = "";
+					theHero.setPosition(newHeroPosition);
+					//content.innerHTML += theHero.getPosition();
+									
+					document.getElementById(newHeroPosition).className = "hero";
+					compTurn();
+				}
+				else{	//Not valid input, do nothing
+			
+				}
+			}
+		}
+		else{
+				//alert("Hero movement is not possible!");
+				compTurn();
+		}
+		
+	}
+	
+	/*This function goes through all the killer robots, moves them and updates the number of rounds played
+	 *Also checks whether either hero or robots can move, if both can't ends the game, if robots can't move
+	 *updates rounds played and continues to hero turn
+	*/
+	
+	function compTurn(){
+	
+		var noRobotCanMove = true;
+		
+		for(i=0;i<killerRobots.length;i++){
+			
+			var killerPosition = killerRobots[i].getPosition();
+			killerMove(killerPosition,i);
+			
+		}
+		//if after all robots have moved, none can end turn
+		for(i=0;i<killerRobots.length;i++){
+			if(killerRobots[i].getPossibleMovement() == false){
+				continue;
+			}
+			else{
+				noRobotCanMove = false;
+				break;
+			}
+		}
+		//neither hero nor robots can move, end the game
+		if(noRobotCanMove == true && theHero.getPossibleMovement() == false){
+			alert("No one can move!");
+			endGame("Draw");
+		}
+		//increment rounds played and display
+		roundsPlayed++;
+		document.getElementById("rounds").innerHTML = roundsPlayed;
+	}
+	
+	/*	This function determines how the killer robots will move
+	* 	It firstly checks that movement is possible, if not marks the robot as such and returns
+	*	Otherwise it attempts to move the robot closer to the hero, if an obstacle or another robot is 
+	*	encountered it moves to the first free cell instead.
+	*/
+	function killerMove(killerPosition,i){
+	
+		var killerRow = captureRow(killerPosition);
+		var killerCell = captureCell(killerPosition);
+		
+		//For changing values back after checking for hero/treasure
+		var oldKillerRow = killerRow;	
+		var oldKillerCell = killerCell;
+		//Requires Int parsing as produces string concatenation otherwise
+		var maxKillerRow = parseInt(killerRow) + 1;
+		var maxKillerCell = parseInt(killerCell) + 1;
+		var minKillerRow = parseInt(killerRow) - 1;
+		var minKillerCell = parseInt(killerCell) - 1;
+		//Initially check for possible movement, if not possible set possibleMovement to false and return
+		//Check all nine surrounding cells for obstacles or edges
+		//break if non-occupied cell found
+		
+		 if(!killerMoveCheck(killerPosition)){
+			killerRobots[i].setPossibleMovement(false);
+			//alert("Robot cannot move");
+			return;
+		 }
+		 
+		
+		killerCell = oldKillerCell;
+		killerRow = oldKillerRow;
+		//alert(maxKillerRow);
+		//Check for treasures in adjacent cells, move to if there is one
+		//also check for hero - greater priority than treasure
+		
+		for(killerRow = minKillerRow;killerRow<=maxKillerRow;killerRow++){
+			for(killerCell = minKillerCell;killerCell<=maxKillerCell;killerCell++){
+				var checkID = "row"+killerRow+"cell"+killerCell;
+				var checkDocID = document.getElementById(checkID);
+				//alert("Checking: " + checkID);
+				if(checkDocID == null){
+					continue;
+				}
+				else if(heroCheck(checkID)){
+					killerRobots[i].setPosition(checkID);
+					document.getElementById(killerPosition).className = '';
+					checkDocID.className = 'dead';
+					alert("You have been caught by a killer robot, bad luck!");
+					//End the game with Robot win, i.e player lost
+					endGame("Defeat");
+				}
+				//Treasure - remove from game
+				else if(treasureCheck(checkID)){
+					//Remove the treasure from the board
+					for(j = 0;j<treasures.length;j++){
+						if(treasures[j].getPosition() == checkID){
+							treasures.splice(j,1);
+						}
+					}
+					killerRobots[i].setPosition(checkID);
+					document.getElementById(killerPosition).className = '';
+					checkDocID.className = 'robot';
+					killerPosition = checkID;
+					alert("A killer robot has taken a treasure!");
+					//If last treasure taken, end game
+					if(treasures.length <= 0){
+						endGame("Win");
+					}
+					//alert(treasures.length);
+					return;	//End Turn
+				}
+			}
+		}
+		//return killer position to original values
+		killerCell = oldKillerCell;
+		killerRow = oldKillerRow;
+		
+		//Hero Position, row and cell, used for calculating movement
+		//Take hero and killer position ,calculate hero-killer, move based on result
+		var heroPos = theHero.getPosition();
+		var heroCell = captureCell(heroPos);
+		var heroRow = captureRow(heroPos);
+		
+		//Find difference in row negative, move down, positive move up
+		
+		var moveRow = killerRow - heroRow;
+		var moveCell = killerCell - heroCell;
+		
+		switch(true){
+			case moveRow < 0: killerRow++; //down
+			break;
+			case moveRow > 0 : killerRow--; //up
+			break;
+			case moveRow == 0: //Do nothing
+			break;
+		}
+		switch(true){
+			case moveCell < 0: killerCell++; //right
+			break;
+			case moveCell > 0: killerCell--; //left
+			break;
+			case moveCell == 0:	//Do nothing
+			break;	
+		}
+		var newKillerPosition = "row"+killerRow+"cell"+killerCell;
+		//alert(killerPosition);
+		//alert(newKillerPosition);
+		//If the robot attempts to move to a cell already occupied by a obstacle or another robot
+		//search for the first empty adjacent cell and move there.
+		if(obstacleCheck(newKillerPosition) || killerRobotCheck(newKillerPosition)){
+			//Check adjacent cells for obstacles and move to first available cell
+			//killerMove(killerPosition,i);
+			
+			for(killerRow=minKillerRow;killerRow<=maxKillerRow;killerRow++){
+				for(killerCell=minKillerCell;killerCell<=maxKillerCell;killerCell++){
+					var checkCell = "row"+killerRow+"cell"+killerCell;
+					//alert("Checking: " +checkCell);
+					var checkAddress = document.getElementById(checkCell);
+					if(obstacleCheck(checkCell) || killerRow < 0 || killerRow > 9 || killerCell < 0 || killerCell > 9 || checkAddress == null
+						|| killerRobotCheck(checkCell) ){
+						continue;
+					}
+					//Free cell found move here
+					else{
+						
+						newKillerPosition = checkCell;
+						killerRobots[i].setPosition(newKillerPosition);
+						document.getElementById(killerPosition).className='';
+						document.getElementById(newKillerPosition).className='robot';
+						return;
+					}
+				}
+			}
+		}
+		//Normal Movement, replace cell contents, change robots position
+		else{	
+			killerRobots[i].setPosition(newKillerPosition);
+			document.getElementById(killerPosition).className='';
+			document.getElementById(newKillerPosition).className='robot';
+		}
+	}
+	/*This function checks if it is posssible for a particular robot to move
+	 *checks for obstacles,edges and other robots in the surronding cells,
+	 *if at least one cell free returns true.
+	*/
+	function killerMoveCheck(kPosition){
+	
+		var killerRow = captureRow(kPosition);
+		var killerCell = captureCell(kPosition);
+		
+		//For changing values back after checking for hero/treasure
+		var oldKillerRow = killerRow;	
+		var oldKillerCell = killerCell;
+		//Requires Int parsing as produces string concatenation otherwise
+		var maxKillerRow = parseInt(killerRow) + 1;
+		var maxKillerCell = parseInt(killerCell) + 1;
+		var minKillerRow = parseInt(killerRow) - 1;
+		var minKillerCell = parseInt(killerCell) - 1;
+		
+		for(killerRow = minKillerRow;killerRow<=maxKillerRow;killerRow++){
+			for(killerCell = minKillerCell;killerCell<=maxKillerCell;killerCell++){
+				var checkID = "row"+killerRow+"cell"+killerCell;
+				var checkDocID = document.getElementById(checkID);
+				
+				if(checkDocID == null || checkID == kPosition || checkDocID.className == 'obstacle' || checkDocID.className == 'robot'){
+					continue;
+				}
+				else{
+					 return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	/*This function ends the game, clears all content, removes the button press
+	 *event and replaces the cleared content with scores,rounds played and result.
+	 *Call this at the end of the game, whether button press or natural end
+	 *result parameter is the result of the game passed in appropriate situation
+	 *e.g. lose if hero killed
+	*/
+	function endGame(result){
+		
+			content = document.getElementById("content");
+			content.innerHTML = "";
+			content.innerHTML += "<br/> Rounds Played: " + roundsPlayed;
+			content.innerHTML += "<br/>Your final score is: " + totalTreasure;
+			content.innerHTML += "<br/>Result:  "+result;
+			content.innerHTML += "<br/>To restart the game, refresh the page.";
+			window.onkeyup = function(){		//unbind key events, function does nothing
+			}
+	}
+	//call this from the endGame button, ask for confirmation first
+	//always ends in a draw, assumes hero alive, treasure left on board
+	function confirmEndGame(){
+		var  r = confirm("Are you sure you want to end the game?");
+		if(r == true){
+			endGame("Win");
+		}
+		else{	//Do nothing
+		}
+	}
+	
+	//Use these to capture the row and cell id numbers of the table
+	//ID Format rowXcellY	
+	
+	function captureCell(string){
+		c = (/(?:row\dcell)(\d)/.exec(string));
+		c = c[1];
+		return c;
+	}
+	
+	function captureRow(string){
+		d = (/(?:row)(\d)(?:cell\d)/.exec(string));
+		d = d[1];
+		return d;
+	}
+	
+	//The following functions check if a cell is occupied, used for both the hero and the robots
+	
+	function killerRobotCheck(newPosition){
+		checkPosition = document.getElementById(newPosition);
+		if(checkPosition == null){
+			return false;
+		}
+		if(checkPosition.className == 'robot'){
+			return true;
+		}
+		
+		return false;
+	}
+	
+	function obstacleCheck(newPosition){
+		checkPosition = document.getElementById(newPosition);
+		if(checkPosition == null){
+			return false;
+		}
+		if(checkPosition.className == 'obstacle'){
+			return true;
+		}
+		
+		return false;
+	}
+	
+	function treasureCheck(newPosition){
+		checkPosition = document.getElementById(newPosition);
+		if(checkPosition.className == 'treasure'){
+			return true;
+		}
+		
+		return false;
+	}
+	function heroCheck(newPosition){
+		checkPosition = document.getElementById(newPosition);
+		if(checkPosition == null){
+			return false;
+		}
+		if(checkPosition.className == 'hero'){
+			return true;
+		}
+		
+		return false;
+	}
+	
+	
+</script>
+<link rel="shortcut icon" href="hk-47ii.png"/>	<!--Favicon (image in tab)-->
+</head>
+<body id="body">
+<div id = "wrapper">
+	<div id="header">
+	<!--Title and Description, including rules for the game-->
+	<h1><u>Welcome to the hero game!</u></h1>
+	</div>
+	<div id="content">
+	<p><h3>Can you defeat the killer robots?</h3></p>
+	<p><u><h3>Setup Stage:</u></h3></p>
+	<p>To setup the game select a cell in the table below and type:
+	<ul>
+	<li><i>'h'</i> to place our intrepid hero.<img src="hero.png" alt="Our Hero!" title="Our Hero!" style="float:right"/><br/></li>
+	
+	<li><i>'o'</i> to place an obstacle</li> 
+	<li><i>'0-9'</i> to place a treasure of value, assigned the number you just entered.</li>
+	<li><i>'k'</i> to place a killer robot.<img src="hk-47.png" alt="A Killer Robot!" title="A Killer Robot!" style="float:right"/></li>
+	</ul></p>
+	
+	<p>
+	Additional Rules:
+	
+	<ul>
+		<li> You can only place <strong>one</strong> hero.</li>
+		<li> If you do <strong>not</strong> place any treasures, the game ends automatically in a win.</li>
+		<li> A Cell can only contain <strong>one</strong> object.</li>
+		<li> Once you have placed an item in a cell you <strong>can't</strong> remove or modify it.</li>
+	</ul>
+	</p>
+
+	<script type="text/javascript">
+	
+	//Arrays for holding objects (which hold their positions, values,etc)
+	var treasures = [];
+	var killerRobots = [];
+	var obstacles = [];
+	var heroPlaced = false;
+	var gameEnded = false;
+	var totalTreasure = 0;
+	var roundsPlayed = 0;
+	
+	//Add table to page 10x10
+	document.writeln("<table border='5' cellpadding='10' align='center' cellspacing='5' id='setup'>")
+	for (var i=0;i<10;i++){
+		document.writeln("<tr id =row" + i +">")
+			//Creates the individual cells
+			for(var j = 0;j<10;j++){
+				document.writeln("<td id=row"+i+"cell"+j+" onclick=\"addItem(this)\"></td>")
+			}
+		document.writeln("</tr>")
+	}
+	document.writeln("</table>")
+	</script>
+	<noscript>
+	<!-- Error message if javascript not able to run-->
+	Javascript not supported or disabled, please enable javascript or upgrade your browser to play the game.
+	</noscript>
+	<p> Once you have completed setting up the game press the button below to continue: </p>
+	
+	<button type="Button" onclick="playGame()">Continue</button>
+	
+	</div>	<!--End of Content Div-->
+	<div id = "bottom">
+	<br/><hr/><br/>
+	<i>Created by Edward Stansfield : U3ES</i>
+	</div>
+	</div>	<!--End of Wrapper div -->
+
+</body>
+</html>
